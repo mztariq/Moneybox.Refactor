@@ -15,41 +15,27 @@ namespace Moneybox.App.Features
             _notificationService = notificationService;
         }
 
-        public void Execute(Guid fromAccountId, Guid toAccountId, decimal amount)
+        public void Execute(Guid accountHolderId, Guid accountRecipientId, decimal transferAmount)
         {
-            var from = _accountRepository.GetAccountById(fromAccountId);
-            var to = _accountRepository.GetAccountById(toAccountId);
+            Account accountHolder, accountRecipient;
+            GetAccountDetails(accountHolderId, accountRecipientId, out accountHolder, out accountRecipient);
 
-            var fromBalance = from.Balance - amount;
-            if (fromBalance < 0m)
-            {
-                throw new InvalidOperationException("Insufficient funds to make transfer");
-            }
+            accountHolder.WithdrawalAmount(transferAmount, _notificationService);
 
-            if (fromBalance < 500m)
-            {
-                _notificationService.NotifyFundsLow(from.User.Email);
-            }
+            accountRecipient.PayInAmount(transferAmount, _notificationService);
+            UpdateAccounts(accountHolder, accountRecipient);
+        }
 
-            var paidIn = to.PaidIn + amount;
-            if (paidIn > Account.PayInLimit)
-            {
-                throw new InvalidOperationException("Account pay in limit reached");
-            }
+        private void GetAccountDetails(Guid accountHolderId, Guid accountRecipientId, out Account accountHolder, out Account accountRecipient)
+        {
+            accountHolder = _accountRepository.GetAccountById(accountHolderId);
+            accountRecipient = _accountRepository.GetAccountById(accountRecipientId);
+        }
 
-            if (Account.PayInLimit - paidIn < 500m)
-            {
-                _notificationService.NotifyApproachingPayInLimit(to.User.Email);
-            }
-
-            from.Balance = from.Balance - amount;
-            from.Withdrawn = from.Withdrawn - amount;
-
-            to.Balance = to.Balance + amount;
-            to.PaidIn = to.PaidIn + amount;
-
-            _accountRepository.Update(from);
-            _accountRepository.Update(to);
+        private void UpdateAccounts(Account accountHolder, Account accountRecipient)
+        {
+            _accountRepository.Update(accountHolder);
+            _accountRepository.Update(accountRecipient);
         }
     }
 }

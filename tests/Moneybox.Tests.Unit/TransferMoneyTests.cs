@@ -15,33 +15,37 @@ namespace Moneybox.Tests.Unit
 
         public TransferMoneyTests()
         {
-            accountRepository = new Mock<IAccountRepository>(); 
+            accountRepository = new Mock<IAccountRepository>();
             notificationService = new Mock<INotificationService>();
         }
 
-        [Fact]
-        public void When_Insufficient_Funds_Then_Throw_Invalid_Operation_Exception()
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        public void When_Insufficient_Funds_Then_Throw_Invalid_Operation_Exception(decimal balance)
         {
             var amount = 1m;
             accountRepository.Setup(x => x.GetAccountById(It.IsAny<Guid>()))
-                .Returns(new Account());
+                .Returns(GetAccountDetails(balance, 0m, 12m));
 
             var moneyObject = new TransferMoney(accountRepository.Object, notificationService.Object);
 
-            Assert.Throws<InvalidOperationException>(() 
+            Assert.Throws<InvalidOperationException>(()
                 => moneyObject.Execute(Guid.NewGuid(), Guid.NewGuid(), amount));
         }
 
 
-        [Fact]
-        public void When_PayIn_Limit_Reached_Then_Throw_Invalid_Operation_Exception()
+        [Theory]
+        [InlineData(4003)]
+        [InlineData(5000)]
+        public void When_PayIn_Limit_Reached_Then_Throw_Invalid_Operation_Exception(decimal paidIn)
         {
             var amount = -1m;
-            var account = GetAccountDetails(500m, 4003m);
+            var account = GetAccountDetails(500m, 0m, paidIn);
             accountRepository.Setup(x => x.GetAccountById(It.IsAny<Guid>()))
                 .Returns(account);
 
-            
+
             notificationService.Setup(x => x.NotifyFundsLow(It.IsAny<string>())).Verifiable();
             notificationService.Setup(x => x.NotifyApproachingPayInLimit(account.User.Email)).Verifiable();
 
@@ -55,7 +59,7 @@ namespace Moneybox.Tests.Unit
         [Fact]
         public void When_From_Balance_Is_Less_500_Notify_Low_Funds()
         {
-            var account = GetAccountDetails(500m, 1m);
+            var account = GetAccountDetails(500m, 0m, 1m);
 
             accountRepository.Setup(x => x.GetAccountById(It.IsAny<Guid>()))
                 .Returns(account);
@@ -74,7 +78,7 @@ namespace Moneybox.Tests.Unit
         [Fact]
         public void When_PayInLimit_Minus_PaidIn_Is_Less_500_Notify_Low_Funds()
         {
-            var account = GetAccountDetails(3m, 3800m);
+            var account = GetAccountDetails(3m, 0m, 3800m);
 
             accountRepository.Setup(x => x.GetAccountById(It.IsAny<Guid>()))
                 .Returns(account);
@@ -92,7 +96,7 @@ namespace Moneybox.Tests.Unit
 
 
         [Fact]
-        public void Notification_Method_Called_Atleast_Once() 
+        public void Notification_Method_Called_Atleast_Once()
         {
             //Arrange
             var mock = new Mock<INotificationService>();
