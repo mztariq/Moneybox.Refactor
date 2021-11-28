@@ -24,3 +24,12 @@ As part of this process however, you should look to refactor some of the code in
 Once you have completed test, zip up your solution, excluding any build artifacts to reduce the size, and email it back to our recruitment team.
 
 Good luck!
+
+
+## Results
+
+Test Results are below for all the unit tests added. 
+
+
+![Screenshot 2021-11-28 at 22 48 15](https://user-images.githubusercontent.com/8701702/143789403-8cefc798-64f8-42f8-8b79-b619b1b78a4d.jpg)
+
