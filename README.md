@@ -1,3 +1,14 @@
+# Feedback I would give, and bear in mind
+
+  *	Unnecessary use of the 'out' parameters which is a bit of an anti pattern/ code smell in this usage
+  *	Properties not properly encapsulated so could be modified outside of domain class
+  *	Notification would be sent even if the account repository failed to update
+  *	No happy path test to actually cover the movement of money
+
+
+Anyone doing the test please bear these points in minds. 
+
+
 # Moneybox Money Withdrawal
 
 The solution contains a .NET core library (Moneybox.App) which is structured into the following 3 folders:
